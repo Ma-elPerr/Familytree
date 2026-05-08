@@ -27,7 +27,7 @@ export default function FloatingTrees({ trees, graph }: FloatingTreesProps) {
         Estes são sub-grafos desconectados da árvore principal. Se um Match de DNA estiver aqui, é uma pista importante.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedTrees.map((tree, idx) => {
           const repNode = graph.get(tree.id);
           const repName = repNode?.individual.name || tree.id;
@@ -35,7 +35,7 @@ export default function FloatingTrees({ trees, graph }: FloatingTreesProps) {
           return (
             <div
               key={idx}
-              className={`p-4 rounded-lg border ${tree.hasDNAMatch ? 'bg-yellow-50 border-yellow-300' : 'bg-gray-50 border-gray-200'}`}
+              className={`p-5 rounded-lg border transition-shadow hover:shadow-md ${tree.hasDNAMatch ? 'bg-yellow-50/80 border-yellow-300' : 'bg-gray-50/80 border-gray-200'}`}
             >
               <div className="flex items-start justify-between">
                 <div>

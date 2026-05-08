@@ -1,0 +1,67 @@
+0 HEAD
+1 SOUR PAF
+2 NAME Personal Ancestral File
+2 VERS 5.0
+1 DEST PAF
+1 DATE 10 MAY 2024
+0 @I1@ INDI
+1 NAME Patricia /Perrucci/
+1 SEX F
+1 BIRT
+2 DATE 1980
+2 PLAC Sao Paulo
+1 FAMC @F1@
+0 @I2@ INDI
+1 NAME Joao /Perrucci/
+1 SEX M
+1 BIRT
+2 DATE 1950
+1 FAMS @F1@
+1 FAMC @F2@
+0 @I3@ INDI
+1 NAME Maria /Silva/
+1 SEX F
+1 BIRT
+2 DATE 1952
+1 FAMS @F1@
+0 @I4@ INDI
+1 NAME Antonio /Perrucci/
+1 SEX M
+1 BIRT
+2 DATE 1920
+1 FAMS @F2@
+0 @I5@ INDI
+1 NAME Ana /Parigot/
+1 SEX F
+1 BIRT
+2 DATE 1925
+1 FAMS @F2@
+0 @I6@ INDI
+1 NAME Carlos /Lustoza/
+1 SEX M
+1 BIRT
+2 DATE 1945
+1 FAMS @F3@
+0 @I7@ INDI
+1 NAME Roberta /Lustoza/
+1 SEX F
+1 BIRT
+2 DATE 1975
+1 FAMC @F3@
+0 @I8@ INDI
+1 NAME Roberta /Lustoza/
+1 SEX F
+1 BIRT
+2 DATE 1975
+0 @F1@ FAM
+1 HUSB @I2@
+1 WIFE @I3@
+1 CHIL @I1@
+0 @F2@ FAM
+1 HUSB @I4@
+1 WIFE @I5@
+1 CHIL @I2@
+0 @F3@ FAM
+1 HUSB @I6@
+1 CHIL @I7@
+0 TRLR

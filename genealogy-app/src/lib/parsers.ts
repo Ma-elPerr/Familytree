@@ -124,7 +124,11 @@ export async function parseCSV(file: File): Promise<DNAMatch[]> {
           if (name && cMStr) {
             const cM = parseFloat(cMStr.toString().replace(/,/g, '.'));
             if (!isNaN(cM)) {
-              matches.push({ name, cM, treeLink });
+              matches.push({
+                name: String(name),
+                cM,
+                treeLink: treeLink ? String(treeLink) : undefined
+              });
             }
           }
         }
