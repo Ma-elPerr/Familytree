@@ -1,0 +1,95 @@
+'use client';
+
+import React, { useState } from 'react';
+import FileUpload from '@/components/FileUpload';
+import MatchReport from '@/components/MatchReport';
+import FloatingTrees from '@/components/FloatingTrees';
+import DuplicatesReport from '@/components/DuplicatesReport';
+import { parseGedcom, parseCSV } from '@/lib/parsers';
+import { buildGraph, GenealogyGraph } from '@/lib/graph';
+import { processMatches, MatchResult } from '@/lib/algorithms';
+import { findFloatingTrees, findDuplicates, FloatingTree, DuplicateGroup } from '@/lib/analysis';
+
+export default function Home() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [graph, setGraph] = useState<GenealogyGraph | null>(null);
+  const [matches, setMatches] = useState<MatchResult[]>([]);
+  const [floatingTrees, setFloatingTrees] = useState<FloatingTree[]>([]);
+  const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([]);
+
+  const handleProcessFiles = async (gedcomFile: File, csvFile: File, rootPersonId: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Parse GEDCOM
+      const gedcomText = await gedcomFile.text();
+      const gedcomData = await parseGedcom(gedcomText);
+
+      // 2. Build Graph
+      const g = buildGraph(gedcomData);
+      setGraph(g);
+
+      // 3. Parse CSV
+      const dnaMatches = await parseCSV(csvFile);
+
+      // 4. Match and Find MRCA
+      const matchResults = processMatches(dnaMatches, g, rootPersonId);
+      setMatches(matchResults);
+
+      // 5. Analysis: Floating Trees and Duplicates
+      const trees = findFloatingTrees(g, rootPersonId, matchResults);
+      setFloatingTrees(trees);
+
+      const dups = findDuplicates(g);
+      setDuplicates(dups);
+
+    } catch (err: unknown) {
+      console.error(err);
+      if (err instanceof Error) {
+        setError(err.message || 'Ocorreu um erro ao processar os arquivos.');
+      } else {
+        setError('Ocorreu um erro ao processar os arquivos.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-2xl font-bold text-gray-900">Genealogy Engine - Caso Patrícia Perrucci</h1>
+          <p className="text-sm text-gray-500">Cruzamento de DNA e Árvore Genealógica (GEDCOM)</p>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        <FileUpload onFilesUploaded={handleProcessFiles} />
+
+        {loading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {!loading && graph && (
+          <>
+            <MatchReport matches={matches} graph={graph} />
+            <FloatingTrees trees={floatingTrees} graph={graph} />
+            <DuplicatesReport duplicates={duplicates} />
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
