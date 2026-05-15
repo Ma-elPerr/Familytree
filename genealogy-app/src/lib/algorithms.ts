@@ -28,10 +28,24 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
     let bestMatchName: string | undefined;
     let minDistance = Infinity;
 
+    // Skip empty matches
+    if (!normMatchName) {
+      results.push({
+        dnaMatch: match,
+        status: 'Não Localizado'
+      });
+      continue;
+    }
+
     for (const node of individuals) {
       const normGraphName = normalizeName(node.individual.name);
 
-      // Simple exact match
+      // Skip empty graph node names
+      if (!normGraphName) {
+        continue;
+      }
+
+      // Simple exact match or substring match
       if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
         bestMatchId = node.individual.id;
         bestMatchName = node.individual.name;
