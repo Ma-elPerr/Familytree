@@ -20,7 +20,10 @@ function normalizeName(name: string): string {
 
 export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchResult[] {
   const results: MatchResult[] = [];
-  const individuals = Array.from(graph.values());
+  const individuals = Array.from(graph.values()).map(node => ({
+    node,
+    normGraphName: normalizeName(node.individual.name)
+  }));
 
   for (const match of dnaMatches) {
     const normMatchName = normalizeName(match.name);
@@ -28,9 +31,7 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
     let bestMatchName: string | undefined;
     let minDistance = Infinity;
 
-    for (const node of individuals) {
-      const normGraphName = normalizeName(node.individual.name);
-
+    for (const { node, normGraphName } of individuals) {
       // Simple exact match
       if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
         bestMatchId = node.individual.id;
