@@ -24,10 +24,11 @@ export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string
     if (!visited.has(nodeId)) {
       const component: string[] = [];
       const queue = [nodeId];
+      let head = 0;
       visited.add(nodeId);
 
-      while (queue.length > 0) {
-        const current = queue.shift()!;
+      while (head < queue.length) {
+        const current = queue[head++];
         component.push(current);
 
         const node = graph.get(current);
