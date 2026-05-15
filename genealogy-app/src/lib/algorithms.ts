@@ -66,9 +66,10 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
 function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string[]> {
   const ancestors = new Map<string, string[]>();
   const queue: { id: string, path: string[] }[] = [{ id: startNodeId, path: [startNodeId] }];
+  let queueIndex = 0;
 
-  while (queue.length > 0) {
-    const { id, path } = queue.shift()!;
+  while (queueIndex < queue.length) {
+    const { id, path } = queue[queueIndex++];
 
     const node = graph.get(id);
     if (!node) continue;
