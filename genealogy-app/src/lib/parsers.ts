@@ -64,21 +64,13 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
     let birthYear: number | undefined;
     let birthPlace: string | undefined;
     const birthEvent = record.getEventBirth();
-    if (birthEvent.length > 0) {
-       const date = birthEvent.getDate();
-       if (date.length > 0) {
-           const dateStr = date.value()[0];
-           if (dateStr) {
-               const match = dateStr.match(/\d{4}/);
-               if (match) birthYear = parseInt(match[0], 10);
-           }
-       }
-       const place = birthEvent.getPlace();
-       if (place.length > 0) {
-           const placeStr = place.value()[0];
-           if (placeStr) birthPlace = placeStr;
-       }
-    }
+
+    const dateStr = birthEvent.getDate().value()[0];
+    const match = dateStr?.match(/\d{4}/);
+    if (match) birthYear = parseInt(match[0], 10);
+
+    const placeStr = birthEvent.getPlace().value()[0];
+    if (placeStr) birthPlace = placeStr;
 
     individuals.set(id, {
       id,
