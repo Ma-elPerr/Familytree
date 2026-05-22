@@ -10,6 +10,16 @@ interface MatchReportProps {
   graph: GenealogyGraph;
 }
 
+const isValidUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export default function MatchReport({ matches, graph }: MatchReportProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -64,7 +74,7 @@ export default function MatchReport({ matches, graph }: MatchReportProps) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="font-medium text-gray-900">{match.dnaMatch.name}</div>
                   <div className="text-gray-500">{match.dnaMatch.cM} cM</div>
-                  {match.dnaMatch.treeLink && (
+                  {match.dnaMatch.treeLink && isValidUrl(match.dnaMatch.treeLink) && (
                     <a href={match.dnaMatch.treeLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
                       Ver Árvore
                     </a>
