@@ -84,6 +84,20 @@ export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string
   });
 }
 
+export class PersonSignature {
+  static generate(name: string, birthYear?: number): string {
+    return `${name.toLowerCase().trim()}|${birthYear || 'unknown'}`;
+  }
+
+  static parse(signature: string): { name: string; birthYear?: number } {
+    const parts = signature.split('|');
+    return {
+      name: parts[0],
+      birthYear: parts[1] !== 'unknown' ? parseInt(parts[1]) : undefined,
+    };
+  }
+}
+
 // Basic duplicate detection based on Name and Birth Year
 export function findDuplicates(graph: GenealogyGraph): DuplicateGroup[] {
   const signatureMap = new Map<string, string[]>();
@@ -92,7 +106,7 @@ export function findDuplicates(graph: GenealogyGraph): DuplicateGroup[] {
     const { name, birthYear } = node.individual;
     if (!name || name === 'Unknown') continue;
 
-    const sig = `${name.toLowerCase().trim()}|${birthYear || 'unknown'}`;
+    const sig = PersonSignature.generate(name, birthYear);
     if (!signatureMap.has(sig)) {
       signatureMap.set(sig, []);
     }
@@ -102,10 +116,10 @@ export function findDuplicates(graph: GenealogyGraph): DuplicateGroup[] {
   const duplicates: DuplicateGroup[] = [];
   signatureMap.forEach((ids, sig) => {
     if (ids.length > 1) {
-      const parts = sig.split('|');
+      const { name, birthYear } = PersonSignature.parse(sig);
       duplicates.push({
-        name: parts[0],
-        birthYear: parts[1] !== 'unknown' ? parseInt(parts[1]) : undefined,
+        name,
+        birthYear,
         individuals: ids
       });
     }
