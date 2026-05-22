@@ -50,8 +50,8 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
         const partsOpt = nameRecord.valueAsParts()[0];
         if (partsOpt) {
             nameStr = partsOpt.join(' ').replace(/\//g, '');
-            if (partsOpt.length > 0) givenName = partsOpt[0] || '';
-            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
+            givenName = partsOpt[0] || '';
+            surname = (partsOpt[1] || '').replace(/\//g, '');
         } else {
             const val = nameRecord.value()[0];
             if (val) {
