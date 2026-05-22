@@ -49,7 +49,7 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
     if (nameRecord.length > 0) {
         const partsOpt = nameRecord.valueAsParts()[0];
         if (partsOpt) {
-            nameStr = partsOpt.join(' ').replace(/\//g, '');
+            nameStr = partsOpt.join(' ').replace(/\//g, '').trim();
             if (partsOpt.length > 0) givenName = partsOpt[0] || '';
             if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
         } else {
