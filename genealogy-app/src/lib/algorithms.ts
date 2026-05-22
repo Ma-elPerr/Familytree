@@ -10,7 +10,6 @@ export interface MatchResult {
   mrcaId?: string;
   mrcaName?: string;
   pathToMrca?: string[]; // Array of IDs
-  distance?: number;
 }
 
 // Helper to normalize names for comparison
