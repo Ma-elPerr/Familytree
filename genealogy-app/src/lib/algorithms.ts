@@ -66,9 +66,10 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
 function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string[]> {
   const ancestors = new Map<string, string[]>();
   const queue: { id: string, path: string[] }[] = [{ id: startNodeId, path: [startNodeId] }];
+  let head = 0;
 
-  while (queue.length > 0) {
-    const { id, path } = queue.shift()!;
+  while (head < queue.length) {
+    const { id, path } = queue[head++];
 
     const node = graph.get(id);
     if (!node) continue;
@@ -85,12 +86,12 @@ function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, s
   return ancestors;
 }
 
-export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
+export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string, rootAncestorsCache?: Map<string, string[]>): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
   if (rootNodeId === targetNodeId) {
      return { mrcaId: rootNodeId, mrcaName: graph.get(rootNodeId)?.individual.name, path1: [rootNodeId], path2: [targetNodeId] };
   }
 
-  const rootAncestors = getAncestors(graph, rootNodeId);
+  const rootAncestors = rootAncestorsCache || getAncestors(graph, rootNodeId);
   const targetAncestors = getAncestors(graph, targetNodeId);
 
   // Root is an ancestor of target
@@ -145,9 +146,11 @@ export function processMatches(dnaMatches: DNAMatch[], graph: GenealogyGraph, ro
   const matches = matchDNA(dnaMatches, graph);
 
   if (rootNodeId && graph.has(rootNodeId)) {
+    const rootAncestors = getAncestors(graph, rootNodeId);
+
     for (const match of matches) {
       if (match.matchedIndividualId) {
-        const mrcaInfo = findMRCA(graph, rootNodeId, match.matchedIndividualId);
+        const mrcaInfo = findMRCA(graph, rootNodeId, match.matchedIndividualId, rootAncestors);
         match.mrcaId = mrcaInfo.mrcaId;
         match.mrcaName = mrcaInfo.mrcaName;
         // Construct the full path: from target up to MRCA, then down to root
