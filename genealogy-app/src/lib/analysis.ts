@@ -67,8 +67,9 @@ export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string
     // Check for DNA matches in this tree
     const dnaMatchesInTree: string[] = [];
     if (matches) {
+      const compSet = new Set(comp);
       matches.forEach(m => {
-        if (m.matchedIndividualId && comp.includes(m.matchedIndividualId)) {
+        if (m.matchedIndividualId && compSet.has(m.matchedIndividualId)) {
           dnaMatchesInTree.push(`${m.dnaMatch.name} (${m.dnaMatch.cM} cM)`);
         }
       });
