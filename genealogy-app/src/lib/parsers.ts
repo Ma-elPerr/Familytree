@@ -1,4 +1,4 @@
-import { readGedcom } from 'read-gedcom';
+import { readGedcom, SelectionIndividualRecord, SelectionFamilyRecord } from 'read-gedcom';
 import Papa from 'papaparse';
 
 export interface GedcomIndividual {
@@ -28,6 +28,73 @@ export interface DNAMatch {
   treeLink?: string;
 }
 
+export function parseIndividual(record: SelectionIndividualRecord): GedcomIndividual {
+  const id = record.pointer()[0] || '';
+  const nameRecord = record.getName();
+
+  // Attempt to extract given name and surname
+  let nameStr = 'Unknown';
+  let givenName = '';
+  let surname = '';
+
+  if (nameRecord.length > 0) {
+      const partsOpt = nameRecord.valueAsParts()[0];
+      if (partsOpt) {
+          nameStr = partsOpt.join(' ').replace(/\//g, '');
+          if (partsOpt.length > 0) givenName = partsOpt[0] || '';
+          if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
+      } else {
+          const val = nameRecord.value()[0];
+          if (val) {
+              nameStr = val.replace(/\//g, '');
+          }
+      }
+  }
+
+  // Attempt to extract birth year
+  let birthYear: number | undefined;
+  let birthPlace: string | undefined;
+  const birthEvent = record.getEventBirth();
+  if (birthEvent.length > 0) {
+     const date = birthEvent.getDate();
+     if (date.length > 0) {
+         const dateStr = date.value()[0];
+         if (dateStr) {
+             const match = dateStr.match(/\d{4}/);
+             if (match) birthYear = parseInt(match[0], 10);
+         }
+     }
+     const place = birthEvent.getPlace();
+     if (place.length > 0) {
+         const placeStr = place.value()[0];
+         if (placeStr) birthPlace = placeStr;
+     }
+  }
+
+  return {
+    id,
+    name: nameStr,
+    givenName,
+    surname,
+    birthYear,
+    birthPlace
+  };
+}
+
+export function parseFamily(record: SelectionFamilyRecord): GedcomFamily {
+  const id = record.pointer()[0] || '';
+  const husband = record.getHusband().value()[0] || undefined;
+  const wife = record.getWife().value()[0] || undefined;
+  const children = record.getChild().valueNonNull();
+
+  return {
+    id,
+    husband,
+    wife,
+    children
+  };
+}
+
 export async function parseGedcom(fileContent: string): Promise<GedcomData> {
   // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
   const encoder = new TextEncoder();
@@ -38,70 +105,13 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
   const families = new Map<string, GedcomFamily>();
 
   gedcom.getIndividualRecord().arraySelect().forEach(record => {
-    const id = record.pointer()[0] || '';
-    const nameRecord = record.getName();
-
-    // Attempt to extract given name and surname
-    let nameStr = 'Unknown';
-    let givenName = '';
-    let surname = '';
-
-    if (nameRecord.length > 0) {
-        const partsOpt = nameRecord.valueAsParts()[0];
-        if (partsOpt) {
-            nameStr = partsOpt.join(' ').replace(/\//g, '');
-            if (partsOpt.length > 0) givenName = partsOpt[0] || '';
-            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
-        } else {
-            const val = nameRecord.value()[0];
-            if (val) {
-                nameStr = val.replace(/\//g, '');
-            }
-        }
-    }
-
-    // Attempt to extract birth year
-    let birthYear: number | undefined;
-    let birthPlace: string | undefined;
-    const birthEvent = record.getEventBirth();
-    if (birthEvent.length > 0) {
-       const date = birthEvent.getDate();
-       if (date.length > 0) {
-           const dateStr = date.value()[0];
-           if (dateStr) {
-               const match = dateStr.match(/\d{4}/);
-               if (match) birthYear = parseInt(match[0], 10);
-           }
-       }
-       const place = birthEvent.getPlace();
-       if (place.length > 0) {
-           const placeStr = place.value()[0];
-           if (placeStr) birthPlace = placeStr;
-       }
-    }
-
-    individuals.set(id, {
-      id,
-      name: nameStr,
-      givenName,
-      surname,
-      birthYear,
-      birthPlace
-    });
+    const individual = parseIndividual(record);
+    individuals.set(individual.id, individual);
   });
 
   gedcom.getFamilyRecord().arraySelect().forEach(record => {
-    const id = record.pointer()[0] || '';
-    const husband = record.getHusband().value()[0] || undefined;
-    const wife = record.getWife().value()[0] || undefined;
-    const children = record.getChild().valueNonNull();
-
-    families.set(id, {
-      id,
-      husband,
-      wife,
-      children
-    });
+    const family = parseFamily(record);
+    families.set(family.id, family);
   });
 
   return { individuals, families };
