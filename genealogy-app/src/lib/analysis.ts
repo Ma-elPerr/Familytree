@@ -16,7 +16,7 @@ export interface DuplicateGroup {
 }
 
 // Find all connected components in the graph
-export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string, matches?: MatchResult[]): FloatingTree[] {
+export function findConnectedComponents(graph: GenealogyGraph): string[][] {
   const visited = new Set<string>();
   const components: string[][] = [];
 
@@ -24,10 +24,11 @@ export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string
     if (!visited.has(nodeId)) {
       const component: string[] = [];
       const queue = [nodeId];
+      let head = 0;
       visited.add(nodeId);
 
-      while (queue.length > 0) {
-        const current = queue.shift()!;
+      while (head < queue.length) {
+        const current = queue[head++];
         component.push(current);
 
         const node = graph.get(current);
@@ -44,6 +45,12 @@ export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string
       components.push(component);
     }
   }
+
+  return components;
+}
+
+export function findFloatingTrees(graph: GenealogyGraph, mainTreeRootId?: string, matches?: MatchResult[]): FloatingTree[] {
+  const components = findConnectedComponents(graph);
 
   // Filter out the main tree if a root is provided
   let floatingComponents = components;
