@@ -85,9 +85,18 @@ function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, s
   return ancestors;
 }
 
+function createMRCAResult(graph: GenealogyGraph, mrcaId: string, path1: string[], path2: string[]) {
+  return {
+    mrcaId,
+    mrcaName: graph.get(mrcaId)?.individual.name,
+    path1,
+    path2
+  };
+}
+
 export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
   if (rootNodeId === targetNodeId) {
-     return { mrcaId: rootNodeId, mrcaName: graph.get(rootNodeId)?.individual.name, path1: [rootNodeId], path2: [targetNodeId] };
+     return createMRCAResult(graph, rootNodeId, [rootNodeId], [targetNodeId]);
   }
 
   const rootAncestors = getAncestors(graph, rootNodeId);
@@ -95,22 +104,12 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
 
   // Root is an ancestor of target
   if (targetAncestors.has(rootNodeId)) {
-      return {
-          mrcaId: rootNodeId,
-          mrcaName: graph.get(rootNodeId)?.individual.name,
-          path1: [rootNodeId],
-          path2: targetAncestors.get(rootNodeId)
-      };
+      return createMRCAResult(graph, rootNodeId, [rootNodeId], targetAncestors.get(rootNodeId)!);
   }
 
   // Target is an ancestor of root
   if (rootAncestors.has(targetNodeId)) {
-      return {
-          mrcaId: targetNodeId,
-          mrcaName: graph.get(targetNodeId)?.individual.name,
-          path1: rootAncestors.get(targetNodeId),
-          path2: [targetNodeId]
-      };
+      return createMRCAResult(graph, targetNodeId, rootAncestors.get(targetNodeId)!, [targetNodeId]);
   }
 
   let bestMRCA: string | undefined;
@@ -130,12 +129,7 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
   }
 
   if (bestMRCA) {
-    return {
-      mrcaId: bestMRCA,
-      mrcaName: graph.get(bestMRCA)?.individual.name,
-      path1: rootAncestors.get(bestMRCA),
-      path2: targetAncestors.get(bestMRCA)
-    };
+    return createMRCAResult(graph, bestMRCA, rootAncestors.get(bestMRCA)!, targetAncestors.get(bestMRCA)!);
   }
 
   return {};
