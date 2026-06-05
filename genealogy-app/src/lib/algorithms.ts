@@ -63,26 +63,47 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
 }
 
 // Returns a map of ancestor ID -> path from startNode to ancestor
-function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string[]> {
-  const ancestors = new Map<string, string[]>();
-  const queue: { id: string, path: string[] }[] = [{ id: startNodeId, path: [startNodeId] }];
+function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string> {
+  const parentMap = new Map<string, string>();
+  const queue: string[] = [startNodeId];
+  let head = 0;
 
-  while (queue.length > 0) {
-    const { id, path } = queue.shift()!;
+  while (head < queue.length) {
+    const id = queue[head++];
 
     const node = graph.get(id);
     if (!node) continue;
 
     for (const parentId of node.parents) {
-      if (!ancestors.has(parentId)) {
-        const newPath = [...path, parentId];
-        ancestors.set(parentId, newPath);
-        queue.push({ id: parentId, path: newPath });
+      if (!parentMap.has(parentId) && parentId !== startNodeId) {
+        parentMap.set(parentId, id);
+        queue.push(parentId);
       }
     }
   }
 
-  return ancestors;
+  return parentMap;
+}
+
+function reconstructPath(parentMap: Map<string, string>, startNodeId: string, targetNodeId: string): string[] {
+  const path: string[] = [];
+  let curr: string | undefined = targetNodeId;
+  while (curr !== undefined && curr !== startNodeId) {
+    path.push(curr);
+    curr = parentMap.get(curr);
+  }
+  path.push(startNodeId);
+  return path.reverse();
+}
+
+function getDepth(parentMap: Map<string, string>, startNodeId: string, nodeId: string): number {
+  let depth = 0;
+  let curr: string | undefined = nodeId;
+  while (curr !== undefined && curr !== startNodeId) {
+    depth++;
+    curr = parentMap.get(curr);
+  }
+  return depth;
 }
 
 export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
@@ -99,7 +120,7 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
           mrcaId: rootNodeId,
           mrcaName: graph.get(rootNodeId)?.individual.name,
           path1: [rootNodeId],
-          path2: targetAncestors.get(rootNodeId)
+          path2: reconstructPath(targetAncestors, targetNodeId, rootNodeId)
       };
   }
 
@@ -108,7 +129,7 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
       return {
           mrcaId: targetNodeId,
           mrcaName: graph.get(targetNodeId)?.individual.name,
-          path1: rootAncestors.get(targetNodeId),
+          path1: reconstructPath(rootAncestors, rootNodeId, targetNodeId),
           path2: [targetNodeId]
       };
   }
@@ -117,10 +138,11 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
   let minTotalDistance = Infinity;
 
   // Find intersection
-  for (const [ancestorId, pathFromRoot] of rootAncestors.entries()) {
+  for (const ancestorId of rootAncestors.keys()) {
     if (targetAncestors.has(ancestorId)) {
-      const pathFromTarget = targetAncestors.get(ancestorId)!;
-      const totalDist = pathFromRoot.length + pathFromTarget.length;
+      const distFromRoot = getDepth(rootAncestors, rootNodeId, ancestorId);
+      const distFromTarget = getDepth(targetAncestors, targetNodeId, ancestorId);
+      const totalDist = distFromRoot + distFromTarget;
 
       if (totalDist < minTotalDistance) {
         minTotalDistance = totalDist;
@@ -133,8 +155,8 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
     return {
       mrcaId: bestMRCA,
       mrcaName: graph.get(bestMRCA)?.individual.name,
-      path1: rootAncestors.get(bestMRCA),
-      path2: targetAncestors.get(bestMRCA)
+      path1: reconstructPath(rootAncestors, rootNodeId, bestMRCA),
+      path2: reconstructPath(targetAncestors, targetNodeId, bestMRCA)
     };
   }
 
