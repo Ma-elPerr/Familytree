@@ -115,20 +115,26 @@ export async function parseCSV(file: File): Promise<DNAMatch[]> {
       complete: (results) => {
         const matches: DNAMatch[] = [];
 
-        for (const row of results.data as Record<string, string | number>[]) {
-          // Attempt to flexibly match common column names
-          const name = row['Name'] || row['Match Name'] || row['Match'] || row['name'];
-          const cMStr = row['Shared DNA'] || row['cM'] || row['Centimorgans'] || row['Shared cM'];
-          const treeLink = row['Tree'] || row['Link'] || row['Tree Link'];
+        if (Array.isArray(results.data)) {
+          for (const item of results.data) {
+            if (item && typeof item === 'object') {
+              const row = item as Record<string, unknown>;
 
-          if (name && cMStr) {
-            const cM = parseFloat(cMStr.toString().replace(/,/g, '.'));
-            if (!isNaN(cM)) {
-              matches.push({
-                name: String(name),
-                cM,
-                treeLink: treeLink ? String(treeLink) : undefined
-              });
+              // Attempt to flexibly match common column names
+              const name = row['Name'] || row['Match Name'] || row['Match'] || row['name'];
+              const cMStr = row['Shared DNA'] || row['cM'] || row['Centimorgans'] || row['Shared cM'];
+              const treeLink = row['Tree'] || row['Link'] || row['Tree Link'];
+
+              if (name && cMStr) {
+                const cM = parseFloat(String(cMStr).replace(/,/g, '.'));
+                if (!isNaN(cM)) {
+                  matches.push({
+                    name: String(name),
+                    cM,
+                    treeLink: treeLink ? String(treeLink) : undefined
+                  });
+                }
+              }
             }
           }
         }
