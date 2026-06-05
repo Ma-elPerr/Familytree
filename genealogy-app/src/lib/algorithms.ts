@@ -85,7 +85,7 @@ function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, s
   return ancestors;
 }
 
-export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
+export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } | null {
   if (rootNodeId === targetNodeId) {
      return { mrcaId: rootNodeId, mrcaName: graph.get(rootNodeId)?.individual.name, path1: [rootNodeId], path2: [targetNodeId] };
   }
@@ -138,7 +138,7 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
     };
   }
 
-  return {};
+  return null;
 }
 
 export function processMatches(dnaMatches: DNAMatch[], graph: GenealogyGraph, rootNodeId?: string): MatchResult[] {
@@ -148,12 +148,14 @@ export function processMatches(dnaMatches: DNAMatch[], graph: GenealogyGraph, ro
     for (const match of matches) {
       if (match.matchedIndividualId) {
         const mrcaInfo = findMRCA(graph, rootNodeId, match.matchedIndividualId);
-        match.mrcaId = mrcaInfo.mrcaId;
-        match.mrcaName = mrcaInfo.mrcaName;
-        // Construct the full path: from target up to MRCA, then down to root
-        if (mrcaInfo.path1 && mrcaInfo.path2) {
-            // path1 is root to MRCA. path2 is target to MRCA.
-            match.pathToMrca = mrcaInfo.path2;
+        if (mrcaInfo) {
+          match.mrcaId = mrcaInfo.mrcaId;
+          match.mrcaName = mrcaInfo.mrcaName;
+          // Construct the full path: from target up to MRCA, then down to root
+          if (mrcaInfo.path1 && mrcaInfo.path2) {
+              // path1 is root to MRCA. path2 is target to MRCA.
+              match.pathToMrca = mrcaInfo.path2;
+          }
         }
       }
     }
