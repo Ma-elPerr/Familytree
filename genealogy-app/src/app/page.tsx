@@ -47,7 +47,6 @@ export default function Home() {
       setDuplicates(dups);
 
     } catch (err: unknown) {
-      console.error(err);
       if (err instanceof Error) {
         setError(err.message || 'Ocorreu um erro ao processar os arquivos.');
       } else {
