@@ -28,7 +28,13 @@ export interface DNAMatch {
   treeLink?: string;
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
 export async function parseGedcom(fileContent: string): Promise<GedcomData> {
+  if (fileContent.length > MAX_FILE_SIZE) {
+    throw new Error('File is too large to process. Maximum allowed size is 50MB.');
+  }
+
   // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
   const encoder = new TextEncoder();
   const arrayBuffer = encoder.encode(fileContent).buffer;
