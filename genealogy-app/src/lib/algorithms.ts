@@ -1,5 +1,5 @@
 import levenshtein from 'fast-levenshtein';
-import { GenealogyGraph } from './graph';
+import { GenealogyGraph, GraphNode } from './graph';
 import { DNAMatch } from './parsers';
 
 export interface MatchResult {
@@ -18,38 +18,44 @@ function normalizeName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
 }
 
+function findBestMatch(normMatchName: string, individuals: GraphNode[]): { bestMatchId?: string, bestMatchName?: string } {
+  let bestMatchId: string | undefined;
+  let bestMatchName: string | undefined;
+  let minDistance = Infinity;
+
+  for (const node of individuals) {
+    const normGraphName = normalizeName(node.individual.name);
+
+    // Simple exact match
+    if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
+      bestMatchId = node.individual.id;
+      bestMatchName = node.individual.name;
+      minDistance = 0;
+      break;
+    }
+
+    // Levenshtein distance for fuzzy matching
+    const distance = levenshtein.get(normMatchName, normGraphName);
+    // Threshold: allow small typos, max 3 edits for long names
+    const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
+
+    if (distance <= threshold && distance < minDistance) {
+      minDistance = distance;
+      bestMatchId = node.individual.id;
+      bestMatchName = node.individual.name;
+    }
+  }
+
+  return { bestMatchId, bestMatchName };
+}
+
 export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchResult[] {
   const results: MatchResult[] = [];
   const individuals = Array.from(graph.values());
 
   for (const match of dnaMatches) {
     const normMatchName = normalizeName(match.name);
-    let bestMatchId: string | undefined;
-    let bestMatchName: string | undefined;
-    let minDistance = Infinity;
-
-    for (const node of individuals) {
-      const normGraphName = normalizeName(node.individual.name);
-
-      // Simple exact match
-      if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
-        bestMatchId = node.individual.id;
-        bestMatchName = node.individual.name;
-        minDistance = 0;
-        break;
-      }
-
-      // Levenshtein distance for fuzzy matching
-      const distance = levenshtein.get(normMatchName, normGraphName);
-      // Threshold: allow small typos, max 3 edits for long names
-      const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
-
-      if (distance <= threshold && distance < minDistance) {
-        minDistance = distance;
-        bestMatchId = node.individual.id;
-        bestMatchName = node.individual.name;
-      }
-    }
+    const { bestMatchId, bestMatchName } = findBestMatch(normMatchName, individuals);
 
     results.push({
       dnaMatch: match,
