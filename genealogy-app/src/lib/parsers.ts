@@ -29,13 +29,17 @@ export interface DNAMatch {
 }
 
 export async function parseGedcom(fileContent: string): Promise<GedcomData> {
+  const individuals = new Map<string, GedcomIndividual>();
+  const families = new Map<string, GedcomFamily>();
+
+  if (!fileContent || fileContent.trim() === '') {
+    return { individuals, families };
+  }
+
   // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
   const encoder = new TextEncoder();
   const arrayBuffer = encoder.encode(fileContent).buffer;
   const gedcom = readGedcom(arrayBuffer);
-
-  const individuals = new Map<string, GedcomIndividual>();
-  const families = new Map<string, GedcomFamily>();
 
   gedcom.getIndividualRecord().arraySelect().forEach(record => {
     const id = record.pointer()[0] || '';
@@ -49,13 +53,13 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
     if (nameRecord.length > 0) {
         const partsOpt = nameRecord.valueAsParts()[0];
         if (partsOpt) {
-            nameStr = partsOpt.join(' ').replace(/\//g, '');
-            if (partsOpt.length > 0) givenName = partsOpt[0] || '';
-            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
+            nameStr = partsOpt.join(' ').replace(/\//g, '').trim();
+            if (partsOpt.length > 0) givenName = (partsOpt[0] || '').trim();
+            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '').trim();
         } else {
             const val = nameRecord.value()[0];
             if (val) {
-                nameStr = val.replace(/\//g, '');
+                nameStr = val.replace(/\//g, '').trim();
             }
         }
     }
