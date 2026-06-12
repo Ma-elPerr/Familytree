@@ -59,7 +59,7 @@ export default function MatchReport({ matches, graph }: MatchReportProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMatches.sort((a, b) => b.dnaMatch.cM - a.dnaMatch.cM).map((match, idx) => (
+            {[...filteredMatches].sort((a, b) => b.dnaMatch.cM - a.dnaMatch.cM).map((match, idx) => (
               <tr key={idx} className={match.status === 'Localizado' ? 'bg-green-50/30 hover:bg-green-50 transition-colors' : 'hover:bg-gray-50 transition-colors'}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="font-medium text-gray-900">{match.dnaMatch.name}</div>
