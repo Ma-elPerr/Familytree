@@ -4,10 +4,7 @@ import Papa from 'papaparse';
 export interface GedcomIndividual {
   id: string;
   name: string;
-  givenName: string;
-  surname: string;
   birthYear?: number;
-  birthPlace?: string;
 }
 
 export interface GedcomFamily {
@@ -41,17 +38,13 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
     const id = record.pointer()[0] || '';
     const nameRecord = record.getName();
 
-    // Attempt to extract given name and surname
+    // Attempt to extract name
     let nameStr = 'Unknown';
-    let givenName = '';
-    let surname = '';
 
     if (nameRecord.length > 0) {
         const partsOpt = nameRecord.valueAsParts()[0];
         if (partsOpt) {
             nameStr = partsOpt.join(' ').replace(/\//g, '');
-            if (partsOpt.length > 0) givenName = partsOpt[0] || '';
-            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
         } else {
             const val = nameRecord.value()[0];
             if (val) {
@@ -62,7 +55,6 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
 
     // Attempt to extract birth year
     let birthYear: number | undefined;
-    let birthPlace: string | undefined;
     const birthEvent = record.getEventBirth();
     if (birthEvent.length > 0) {
        const date = birthEvent.getDate();
@@ -73,20 +65,12 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
                if (match) birthYear = parseInt(match[0], 10);
            }
        }
-       const place = birthEvent.getPlace();
-       if (place.length > 0) {
-           const placeStr = place.value()[0];
-           if (placeStr) birthPlace = placeStr;
-       }
     }
 
     individuals.set(id, {
       id,
       name: nameStr,
-      givenName,
-      surname,
-      birthYear,
-      birthPlace
+      birthYear
     });
   });
 
