@@ -22,15 +22,22 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
   const results: MatchResult[] = [];
   const individuals = Array.from(graph.values());
 
+  // Pre-calculate normalized names for graph individuals
+  const normalizedIndividuals = individuals.map(node => ({
+    node,
+    normGraphName: normalizeName(node.individual.name)
+  }));
+
   for (const match of dnaMatches) {
     const normMatchName = normalizeName(match.name);
     let bestMatchId: string | undefined;
     let bestMatchName: string | undefined;
     let minDistance = Infinity;
 
-    for (const node of individuals) {
-      const normGraphName = normalizeName(node.individual.name);
+    // Threshold: allow small typos, max 3 edits for long names
+    const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
 
+    for (const { node, normGraphName } of normalizedIndividuals) {
       // Simple exact match
       if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
         bestMatchId = node.individual.id;
@@ -39,10 +46,13 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
         break;
       }
 
+      // Heuristic: If length difference is greater than threshold, distance > threshold
+      if (Math.abs(normMatchName.length - normGraphName.length) > threshold) {
+        continue;
+      }
+
       // Levenshtein distance for fuzzy matching
       const distance = levenshtein.get(normMatchName, normGraphName);
-      // Threshold: allow small typos, max 3 edits for long names
-      const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
 
       if (distance <= threshold && distance < minDistance) {
         minDistance = distance;
