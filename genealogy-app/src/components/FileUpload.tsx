@@ -7,6 +7,30 @@ interface FileUploadProps {
   onFilesUploaded: (gedcomFile: File, csvFile: File, rootPersonId: string) => void;
 }
 
+interface DropzoneProps {
+  file: File | null;
+  accept: string;
+  onFileChange: (file: File | null) => void;
+  labelLoaded: string;
+  labelDefault: string;
+}
+
+function Dropzone({ file, accept, onFileChange, labelLoaded, labelDefault }: DropzoneProps) {
+  return (
+    <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${file ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}>
+      <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${file ? 'text-green-500' : 'text-gray-400'}`} />
+      <p className="text-sm text-gray-600 mb-2 font-medium">{file ? labelLoaded : labelDefault}</p>
+      <input
+        type="file"
+        accept={accept}
+        onChange={(e) => onFileChange(e.target.files?.[0] || null)}
+        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
+      />
+      {file && <p className="mt-3 text-xs font-semibold text-green-700">✓ {file.name}</p>}
+    </div>
+  );
+}
+
 export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
   const [gedcomFile, setGedcomFile] = useState<File | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -26,30 +50,22 @@ export default function FileUpload({ onFilesUploaded }: FileUploadProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* GEDCOM Upload */}
-        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${gedcomFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}>
-          <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${gedcomFile ? 'text-green-500' : 'text-gray-400'}`} />
-          <p className="text-sm text-gray-600 mb-2 font-medium">{gedcomFile ? 'GEDCOM Carregado' : 'Arquivo GEDCOM (.ged)'}</p>
-          <input
-            type="file"
-            accept=".ged"
-            onChange={(e) => setGedcomFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-          />
-          {gedcomFile && <p className="mt-3 text-xs font-semibold text-green-700">✓ {gedcomFile.name}</p>}
-        </div>
+        <Dropzone
+          file={gedcomFile}
+          accept=".ged"
+          onFileChange={setGedcomFile}
+          labelLoaded="GEDCOM Carregado"
+          labelDefault="Arquivo GEDCOM (.ged)"
+        />
 
         {/* CSV Upload */}
-        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${csvFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:bg-gray-50'}`}>
-          <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${csvFile ? 'text-green-500' : 'text-gray-400'}`} />
-          <p className="text-sm text-gray-600 mb-2 font-medium">{csvFile ? 'CSV Carregado' : 'Matches de DNA (.csv)'}</p>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-          />
-          {csvFile && <p className="mt-3 text-xs font-semibold text-green-700">✓ {csvFile.name}</p>}
-        </div>
+        <Dropzone
+          file={csvFile}
+          accept=".csv"
+          onFileChange={setCsvFile}
+          labelLoaded="CSV Carregado"
+          labelDefault="Matches de DNA (.csv)"
+        />
       </div>
 
       <div className="mb-6">
