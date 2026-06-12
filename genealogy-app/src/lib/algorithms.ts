@@ -153,7 +153,7 @@ export function processMatches(dnaMatches: DNAMatch[], graph: GenealogyGraph, ro
         // Construct the full path: from target up to MRCA, then down to root
         if (mrcaInfo.path1 && mrcaInfo.path2) {
             // path1 is root to MRCA. path2 is target to MRCA.
-            match.pathToMrca = mrcaInfo.path2;
+            match.pathToMrca = [...[...mrcaInfo.path2].reverse(), ...mrcaInfo.path1.slice(1)];
         }
       }
     }
