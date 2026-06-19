@@ -28,14 +28,10 @@ export interface DNAMatch {
   treeLink?: string;
 }
 
-export async function parseGedcom(fileContent: string): Promise<GedcomData> {
-  // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
-  const encoder = new TextEncoder();
-  const arrayBuffer = encoder.encode(fileContent).buffer;
-  const gedcom = readGedcom(arrayBuffer);
+type GedcomType = ReturnType<typeof readGedcom>;
 
+function extractIndividuals(gedcom: GedcomType): Map<string, GedcomIndividual> {
   const individuals = new Map<string, GedcomIndividual>();
-  const families = new Map<string, GedcomFamily>();
 
   gedcom.getIndividualRecord().arraySelect().forEach(record => {
     const id = record.pointer()[0] || '';
@@ -90,6 +86,12 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
     });
   });
 
+  return individuals;
+}
+
+function extractFamilies(gedcom: GedcomType): Map<string, GedcomFamily> {
+  const families = new Map<string, GedcomFamily>();
+
   gedcom.getFamilyRecord().arraySelect().forEach(record => {
     const id = record.pointer()[0] || '';
     const husband = record.getHusband().value()[0] || undefined;
@@ -103,6 +105,18 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
       children
     });
   });
+
+  return families;
+}
+
+export async function parseGedcom(fileContent: string): Promise<GedcomData> {
+  // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
+  const encoder = new TextEncoder();
+  const arrayBuffer = encoder.encode(fileContent).buffer;
+  const gedcom = readGedcom(arrayBuffer);
+
+  const individuals = extractIndividuals(gedcom);
+  const families = extractFamilies(gedcom);
 
   return { individuals, families };
 }
