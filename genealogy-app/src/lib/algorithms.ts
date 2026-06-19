@@ -63,7 +63,7 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
 }
 
 // Returns a map of ancestor ID -> path from startNode to ancestor
-function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string[]> {
+export function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, string[]> {
   const ancestors = new Map<string, string[]>();
   const queue: { id: string, path: string[] }[] = [{ id: startNodeId, path: [startNodeId] }];
 
