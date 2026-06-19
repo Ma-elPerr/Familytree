@@ -85,9 +85,9 @@ function getAncestors(graph: GenealogyGraph, startNodeId: string): Map<string, s
   return ancestors;
 }
 
-export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path1?: string[], path2?: string[] } {
+export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId: string): { mrcaId?: string, mrcaName?: string, path2?: string[] } {
   if (rootNodeId === targetNodeId) {
-     return { mrcaId: rootNodeId, mrcaName: graph.get(rootNodeId)?.individual.name, path1: [rootNodeId], path2: [targetNodeId] };
+     return { mrcaId: rootNodeId, mrcaName: graph.get(rootNodeId)?.individual.name, path2: [targetNodeId] };
   }
 
   const rootAncestors = getAncestors(graph, rootNodeId);
@@ -98,7 +98,6 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
       return {
           mrcaId: rootNodeId,
           mrcaName: graph.get(rootNodeId)?.individual.name,
-          path1: [rootNodeId],
           path2: targetAncestors.get(rootNodeId)
       };
   }
@@ -108,7 +107,6 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
       return {
           mrcaId: targetNodeId,
           mrcaName: graph.get(targetNodeId)?.individual.name,
-          path1: rootAncestors.get(targetNodeId),
           path2: [targetNodeId]
       };
   }
@@ -133,7 +131,6 @@ export function findMRCA(graph: GenealogyGraph, rootNodeId: string, targetNodeId
     return {
       mrcaId: bestMRCA,
       mrcaName: graph.get(bestMRCA)?.individual.name,
-      path1: rootAncestors.get(bestMRCA),
       path2: targetAncestors.get(bestMRCA)
     };
   }
@@ -151,8 +148,8 @@ export function processMatches(dnaMatches: DNAMatch[], graph: GenealogyGraph, ro
         match.mrcaId = mrcaInfo.mrcaId;
         match.mrcaName = mrcaInfo.mrcaName;
         // Construct the full path: from target up to MRCA, then down to root
-        if (mrcaInfo.path1 && mrcaInfo.path2) {
-            // path1 is root to MRCA. path2 is target to MRCA.
+        if (mrcaInfo.path2) {
+            // path2 is target to MRCA.
             match.pathToMrca = mrcaInfo.path2;
         }
       }
