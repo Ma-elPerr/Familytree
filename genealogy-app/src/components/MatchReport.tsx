@@ -15,8 +15,8 @@ export default function MatchReport({ matches, graph }: MatchReportProps) {
 
   if (!matches || matches.length === 0) return null;
 
+  const term = searchTerm.toLowerCase();
   const filteredMatches = matches.filter(match => {
-    const term = searchTerm.toLowerCase();
     const dnaName = match.dnaMatch.name.toLowerCase();
     const treeName = match.matchedIndividualName?.toLowerCase() || '';
     return dnaName.includes(term) || treeName.includes(term);
