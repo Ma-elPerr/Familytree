@@ -90,7 +90,7 @@ export function findDuplicates(graph: GenealogyGraph): DuplicateGroup[] {
 
   for (const [id, node] of graph.entries()) {
     const { name, birthYear } = node.individual;
-    if (!name || name === 'Unknown') continue;
+    if (!name || name.toLowerCase() === 'unknown') continue;
 
     const sig = `${name.toLowerCase().trim()}|${birthYear || 'unknown'}`;
     if (!signatureMap.has(sig)) {
