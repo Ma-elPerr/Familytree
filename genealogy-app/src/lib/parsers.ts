@@ -28,6 +28,58 @@ export interface DNAMatch {
   treeLink?: string;
 }
 
+type GedcomRoot = ReturnType<typeof readGedcom>;
+type IndividualRecordList = ReturnType<GedcomRoot['getIndividualRecord']>;
+type IndividualRecordArray = ReturnType<IndividualRecordList['arraySelect']>;
+type IndividualRecord = IndividualRecordArray[0];
+
+function extractNameInfo(record: IndividualRecord) {
+  let nameStr = 'Unknown';
+  let givenName = '';
+  let surname = '';
+
+  const nameRecord = record.getName();
+  if (nameRecord.length > 0) {
+    const partsOpt = nameRecord.valueAsParts()[0];
+    if (partsOpt) {
+      nameStr = partsOpt.join(' ').replace(/\//g, '');
+      if (partsOpt.length > 0) givenName = partsOpt[0] || '';
+      if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
+    } else {
+      const val = nameRecord.value()[0];
+      if (val) {
+        nameStr = val.replace(/\//g, '');
+      }
+    }
+  }
+
+  return { nameStr, givenName, surname };
+}
+
+function extractBirthInfo(record: IndividualRecord) {
+  let birthYear: number | undefined;
+  let birthPlace: string | undefined;
+
+  const birthEvent = record.getEventBirth();
+  if (birthEvent.length > 0) {
+    const date = birthEvent.getDate();
+    if (date.length > 0) {
+      const dateStr = date.value()[0];
+      if (dateStr) {
+        const match = dateStr.match(/\d{4}/);
+        if (match) birthYear = parseInt(match[0], 10);
+      }
+    }
+    const place = birthEvent.getPlace();
+    if (place.length > 0) {
+      const placeStr = place.value()[0];
+      if (placeStr) birthPlace = placeStr;
+    }
+  }
+
+  return { birthYear, birthPlace };
+}
+
 export async function parseGedcom(fileContent: string): Promise<GedcomData> {
   // Use TextEncoder to avoid Node.js Buffer dependency in client-side code
   const encoder = new TextEncoder();
@@ -39,46 +91,9 @@ export async function parseGedcom(fileContent: string): Promise<GedcomData> {
 
   gedcom.getIndividualRecord().arraySelect().forEach(record => {
     const id = record.pointer()[0] || '';
-    const nameRecord = record.getName();
 
-    // Attempt to extract given name and surname
-    let nameStr = 'Unknown';
-    let givenName = '';
-    let surname = '';
-
-    if (nameRecord.length > 0) {
-        const partsOpt = nameRecord.valueAsParts()[0];
-        if (partsOpt) {
-            nameStr = partsOpt.join(' ').replace(/\//g, '');
-            if (partsOpt.length > 0) givenName = partsOpt[0] || '';
-            if (partsOpt.length > 1) surname = (partsOpt[1] || '').replace(/\//g, '');
-        } else {
-            const val = nameRecord.value()[0];
-            if (val) {
-                nameStr = val.replace(/\//g, '');
-            }
-        }
-    }
-
-    // Attempt to extract birth year
-    let birthYear: number | undefined;
-    let birthPlace: string | undefined;
-    const birthEvent = record.getEventBirth();
-    if (birthEvent.length > 0) {
-       const date = birthEvent.getDate();
-       if (date.length > 0) {
-           const dateStr = date.value()[0];
-           if (dateStr) {
-               const match = dateStr.match(/\d{4}/);
-               if (match) birthYear = parseInt(match[0], 10);
-           }
-       }
-       const place = birthEvent.getPlace();
-       if (place.length > 0) {
-           const placeStr = place.value()[0];
-           if (placeStr) birthPlace = placeStr;
-       }
-    }
+    const { nameStr, givenName, surname } = extractNameInfo(record);
+    const { birthYear, birthPlace } = extractBirthInfo(record);
 
     individuals.set(id, {
       id,
