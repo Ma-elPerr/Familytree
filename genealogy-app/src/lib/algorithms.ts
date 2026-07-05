@@ -39,10 +39,16 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
         break;
       }
 
-      // Levenshtein distance for fuzzy matching
-      const distance = levenshtein.get(normMatchName, normGraphName);
       // Threshold: allow small typos, max 3 edits for long names
       const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
+
+      // Short-circuit: Levenshtein distance is at least the length difference
+      if (Math.abs(normMatchName.length - normGraphName.length) > threshold) {
+        continue;
+      }
+
+      // Levenshtein distance for fuzzy matching
+      const distance = levenshtein.get(normMatchName, normGraphName);
 
       if (distance <= threshold && distance < minDistance) {
         minDistance = distance;
