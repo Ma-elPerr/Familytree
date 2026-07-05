@@ -24,6 +24,15 @@ export default function Home() {
     setError(null);
 
     try {
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+      if (gedcomFile?.size > MAX_FILE_SIZE) {
+        throw new Error('O arquivo GEDCOM excede o tamanho máximo permitido de 50MB.');
+      }
+      if (csvFile?.size > MAX_FILE_SIZE) {
+        throw new Error('O arquivo CSV excede o tamanho máximo permitido de 50MB.');
+      }
+
       // 1. Parse GEDCOM
       const gedcomText = await gedcomFile.text();
       const gedcomData = await parseGedcom(gedcomText);
