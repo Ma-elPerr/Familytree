@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MatchResult } from '@/lib/algorithms';
 import { GenealogyGraph } from '@/lib/graph';
 import { Search } from 'lucide-react';
@@ -13,14 +13,19 @@ interface MatchReportProps {
 export default function MatchReport({ matches, graph }: MatchReportProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  if (!matches || matches.length === 0) return null;
+  const filteredMatches = useMemo(() => {
+    if (!matches) return [];
+    return matches
+      .filter(match => {
+        const term = searchTerm.toLowerCase();
+        const dnaName = match.dnaMatch.name.toLowerCase();
+        const treeName = match.matchedIndividualName?.toLowerCase() || '';
+        return dnaName.includes(term) || treeName.includes(term);
+      })
+      .sort((a, b) => b.dnaMatch.cM - a.dnaMatch.cM);
+  }, [matches, searchTerm]);
 
-  const filteredMatches = matches.filter(match => {
-    const term = searchTerm.toLowerCase();
-    const dnaName = match.dnaMatch.name.toLowerCase();
-    const treeName = match.matchedIndividualName?.toLowerCase() || '';
-    return dnaName.includes(term) || treeName.includes(term);
-  });
+  if (!matches || matches.length === 0) return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -59,7 +64,7 @@ export default function MatchReport({ matches, graph }: MatchReportProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMatches.sort((a, b) => b.dnaMatch.cM - a.dnaMatch.cM).map((match, idx) => (
+            {filteredMatches.map((match, idx) => (
               <tr key={idx} className={match.status === 'Localizado' ? 'bg-green-50/30 hover:bg-green-50 transition-colors' : 'hover:bg-gray-50 transition-colors'}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="font-medium text-gray-900">{match.dnaMatch.name}</div>
