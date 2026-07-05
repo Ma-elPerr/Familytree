@@ -28,28 +28,38 @@ export function buildGraph(data: GedcomData): GenealogyGraph {
 
     // Spouses
     if (husband && wife) {
-      graph.get(husband)?.spouses.push(wife);
-      graph.get(wife)?.spouses.push(husband);
+      const hNode = graph.get(husband);
+      if (hNode && !hNode.spouses.includes(wife)) {
+        hNode.spouses.push(wife);
+      }
+      const wNode = graph.get(wife);
+      if (wNode && !wNode.spouses.includes(husband)) {
+        wNode.spouses.push(husband);
+      }
     }
 
     // Parents and Children
     children.forEach(child => {
+      const cNode = graph.get(child);
       if (husband) {
-        graph.get(husband)?.children.push(child);
-        graph.get(child)?.parents.push(husband);
+        const hNode = graph.get(husband);
+        if (hNode && !hNode.children.includes(child)) {
+          hNode.children.push(child);
+        }
+        if (cNode && !cNode.parents.includes(husband)) {
+          cNode.parents.push(husband);
+        }
       }
       if (wife) {
-        graph.get(wife)?.children.push(child);
-        graph.get(child)?.parents.push(wife);
+        const wNode = graph.get(wife);
+        if (wNode && !wNode.children.includes(child)) {
+          wNode.children.push(child);
+        }
+        if (cNode && !cNode.parents.includes(wife)) {
+          cNode.parents.push(wife);
+        }
       }
     });
-  });
-
-  // Remove duplicates from arrays just in case
-  graph.forEach(node => {
-    node.parents = Array.from(new Set(node.parents));
-    node.children = Array.from(new Set(node.children));
-    node.spouses = Array.from(new Set(node.spouses));
   });
 
   return graph;
