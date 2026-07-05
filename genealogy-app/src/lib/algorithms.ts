@@ -20,7 +20,11 @@ function normalizeName(name: string): string {
 
 export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchResult[] {
   const results: MatchResult[] = [];
-  const individuals = Array.from(graph.values());
+  const individuals = Array.from(graph.values()).map(node => ({
+    id: node.individual.id,
+    name: node.individual.name,
+    normGraphName: normalizeName(node.individual.name)
+  }));
 
   for (const match of dnaMatches) {
     const normMatchName = normalizeName(match.name);
@@ -28,26 +32,32 @@ export function matchDNA(dnaMatches: DNAMatch[], graph: GenealogyGraph): MatchRe
     let bestMatchName: string | undefined;
     let minDistance = Infinity;
 
+    // Threshold: allow small typos, max 3 edits for long names
+    const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
+
     for (const node of individuals) {
-      const normGraphName = normalizeName(node.individual.name);
+      const { id, name, normGraphName } = node;
 
       // Simple exact match
       if (normMatchName === normGraphName || normGraphName.includes(normMatchName) || normMatchName.includes(normGraphName)) {
-        bestMatchId = node.individual.id;
-        bestMatchName = node.individual.name;
+        bestMatchId = id;
+        bestMatchName = name;
         minDistance = 0;
         break;
       }
 
+      // Short-circuit: if lengths differ by more than threshold, edit distance is at least that difference
+      if (Math.abs(normMatchName.length - normGraphName.length) > threshold) {
+        continue;
+      }
+
       // Levenshtein distance for fuzzy matching
       const distance = levenshtein.get(normMatchName, normGraphName);
-      // Threshold: allow small typos, max 3 edits for long names
-      const threshold = Math.max(3, Math.floor(normMatchName.length * 0.2));
 
       if (distance <= threshold && distance < minDistance) {
         minDistance = distance;
-        bestMatchId = node.individual.id;
-        bestMatchName = node.individual.name;
+        bestMatchId = id;
+        bestMatchName = name;
       }
     }
 
