@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FloatingTree } from '@/lib/analysis';
 import { GenealogyGraph } from '@/lib/graph';
 import { AlertTriangle } from 'lucide-react';
@@ -11,14 +11,17 @@ interface FloatingTreesProps {
 }
 
 export default function FloatingTrees({ trees, graph }: FloatingTreesProps) {
-  if (!trees || trees.length === 0) return null;
-
   // Sort: ones with DNA match first, then by size
-  const sortedTrees = [...trees].sort((a, b) => {
-    if (a.hasDNAMatch && !b.hasDNAMatch) return -1;
-    if (!a.hasDNAMatch && b.hasDNAMatch) return 1;
-    return b.size - a.size;
-  });
+  const sortedTrees = useMemo(() => {
+    if (!trees) return [];
+    return [...trees].sort((a, b) => {
+      if (a.hasDNAMatch && !b.hasDNAMatch) return -1;
+      if (!a.hasDNAMatch && b.hasDNAMatch) return 1;
+      return b.size - a.size;
+    });
+  }, [trees]);
+
+  if (!trees || trees.length === 0) return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
